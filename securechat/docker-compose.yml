@@ -1,0 +1,68 @@
+services:
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      # Uncomment for HTTPS:
+      # - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      backend:
+        condition: service_healthy
+      frontend:
+        condition: service_started
+    restart: unless-stopped
+    networks:
+      - app
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - TRUST_PROXY=1
+      - ROOM_TTL_MS=${ROOM_TTL_MS:-3600000}
+      - CLEANUP_INTERVAL_MS=${CLEANUP_INTERVAL_MS:-60000}
+      - JOIN_RATE_WINDOW_MS=${JOIN_RATE_WINDOW_MS:-60000}
+      - JOIN_RATE_MAX=${JOIN_RATE_MAX:-10}
+      - MAX_WS_FRAME_BYTES=${MAX_WS_FRAME_BYTES:-65536}
+      - MAX_MSG_BYTES=${MAX_MSG_BYTES:-32768}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+    expose:
+      - "3001"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3001/healthz/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    restart: unless-stopped
+    networks:
+      - app
+    # No outbound internet access needed
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    expose:
+      - "80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - app
+    security_opt:
+      - no-new-privileges:true
+
+networks:
+  app:
+    driver: bridge
