@@ -2,11 +2,11 @@
 Alice                    Server                    Bob
   |                        |                        |
   |── ECDH pubkey ────────►|──── ECDH pubkey ──────►|
-  |◄─────────────── ECDH pubkey ───────────────────|
+  |◄─────────────── ECDH pubkey ───────────────────►|
   |                        |                        |
   | Both derive shared AES-256-GCM key (server never sees it)
   |                        |                        |
-  |── AES-GCM ciphertext ─►|── AES-GCM ciphertext ►|
+  |◄─ AES-GCM ciphertext ─►|◄─ AES-GCM ciphertext ─►|
 ```
 
 The server only relays encrypted bytes. Keys live in the browser only.
