@@ -1,4 +1,4 @@
-
+```
 Alice                    Server                    Bob
   |                        |                        |
   |── ECDH pubkey ────────►|──── ECDH pubkey ──────►|
